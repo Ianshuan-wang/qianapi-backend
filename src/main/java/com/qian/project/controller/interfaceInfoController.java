@@ -220,6 +220,7 @@ public class interfaceInfoController {
         // 判断能否调用成功
         com.qianapi.qianapiclientsdk.model.User user = new com.qianapi.qianapiclientsdk.model.User();
         user.setName("wangyixuan");
+        System.out.println(qianapiClient);
         String userName = qianapiClient.getUserName(user);
         if (StringUtils.isBlank(userName)){
             throw new BusinessException(ErrorCode.SYSTEM_ERROR,"接口验证失败");

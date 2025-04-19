@@ -1,5 +1,7 @@
 package com.qian.project.service.impl;
 
+import cn.hutool.core.util.RandomUtil;
+import cn.hutool.crypto.digest.DigestUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.qian.project.common.ErrorCode;
@@ -11,6 +13,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
+
+import cn.hutool.crypto.digest.Digester;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -35,7 +39,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     /**
      * 盐值，混淆密码
      */
-    private static final String SALT = "yupi";
+    private static final String SALT = "qian";
 
     @Override
     public long userRegister(String userAccount, String userPassword, String checkPassword) {
@@ -63,10 +67,17 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
             }
             // 2. 加密
             String encryptPassword = DigestUtils.md5DigestAsHex((SALT + userPassword).getBytes());
+            // 3. 分配accessKey, secretKey
+            // 使用 DigestUtil.md5Hex 将盐值、用户账户和5或8位随机数进行 MD5 加密
+            String accessKey = DigestUtil.md5Hex(SALT + userAccount + RandomUtil.randomNumbers(5));
+            String secretKey = DigestUtil.md5Hex(SALT + userAccount + RandomUtil.randomNumbers(8));
+
             // 3. 插入数据
             User user = new User();
             user.setUserAccount(userAccount);
             user.setUserPassword(encryptPassword);
+            user.setAccessKey(accessKey);
+            user.setSecretKey(secretKey);
             boolean saveResult = this.save(user);
             if (!saveResult) {
                 throw new BusinessException(ErrorCode.SYSTEM_ERROR, "注册失败，数据库错误");
