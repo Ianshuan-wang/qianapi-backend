@@ -1,0 +1,2 @@
+# springboot starter  QianapiClientConfig
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=com.qianapi.qianapiclientsdk.QianapiClientConfig

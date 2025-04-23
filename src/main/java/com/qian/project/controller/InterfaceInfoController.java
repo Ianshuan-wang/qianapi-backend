@@ -2,6 +2,8 @@ package com.qian.project.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.google.gson.Gson;
+import com.qian.project.model.dto.interfaceInfo.InterfaceInfoInvokeRequest;
 import com.qian.project.model.enums.InterfaceInfoStatusEnum;
 import com.qianapi.qianapiclientsdk.client.QianapiClient;
 import com.qian.project.annotation.AuthCheck;
@@ -19,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.*;
+import com.alibaba.fastjson.JSON;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -34,7 +37,7 @@ import static org.apache.commons.lang3.SystemUtils.getUserName;
 @RestController
 @RequestMapping("/interfaceInfo")
 @Slf4j
-public class interfaceInfoController {
+public class InterfaceInfoController {
 
     @Resource
     private InterfaceInfoService interfaceInfoService;
@@ -219,7 +222,7 @@ public class interfaceInfoController {
         }
         // 判断能否调用成功
         com.qianapi.qianapiclientsdk.model.User user = new com.qianapi.qianapiclientsdk.model.User();
-        user.setName("wangyixuan");
+        user.setUsername("wangyixuan");
         System.out.println(qianapiClient);
         String userName = qianapiClient.getUserName(user);
         if (StringUtils.isBlank(userName)){
@@ -261,6 +264,49 @@ public class interfaceInfoController {
         return ResultUtils.success(result);
     }
 
-    // endregion
+
+    /**
+     * 测试调用
+     *
+     * @param interfaceInfoInvokeRequest
+     * @return
+     */
+    @PostMapping("/invoke")
+    public BaseResponse<String> invokeInterfaceInfo(@RequestBody InterfaceInfoInvokeRequest interfaceInfoInvokeRequest,
+                                                     HttpServletRequest request) {
+        if(interfaceInfoInvokeRequest == null || interfaceInfoInvokeRequest.getId() <= 0 ){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        // 判断是否存在
+        long id = interfaceInfoInvokeRequest.getId();
+        InterfaceInfo oldInterfaceInfo = interfaceInfoService.getById(id);
+        if (oldInterfaceInfo == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
+        }
+
+        // 判断接口是否下线
+        if (oldInterfaceInfo.getStatus() == InterfaceInfoStatusEnum.OFFLINE.getValue()) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "接口已下线");
+        }
+        // 获取当前登录用户的ak和sk，这样相当于用户自己的这个身份去调用，
+        // 也不会担心它刷接口，因为知道是谁刷了这个接口，会比较安全
+        String requestParams = interfaceInfoInvokeRequest.getUserRequestParams();
+        User loginUser = userService.getLoginUser(request);
+        String accessKey = loginUser.getAccessKey();
+        String secretKey = loginUser.getSecretKey();
+        System.out.println("accessKey "+accessKey);
+        System.out.println("secretKey "+secretKey);
+        // 我们只需要进行测试调用，所以我们需要解析传递过来的参数。
+        Gson gson = new Gson();
+        // 将用户请求参数转换为com.qianapi.qianapiclientsdk.model.User user对象
+        com.qianapi.qianapiclientsdk.model.User user = JSON.parseObject(requestParams, com.qianapi.qianapiclientsdk.model.User.class);
+
+//        com.qianapi.qianapiclientsdk.model.User user = gson.fromJson(requestParams, com.qianapi.qianapiclientsdk.model.User.class);
+        // 创建一个临时的QianapiClient对象 传入ak sk 如果采用全局的qianapiClient会使用application中配置的管理员的ak sk
+        QianapiClient qianapiClient = new QianapiClient(accessKey, secretKey);
+        // 调用qianapiClient的getUserName方法
+        String userName = qianapiClient.getUserName(user);
+        return ResultUtils.success(userName);
+    }
 
 }
