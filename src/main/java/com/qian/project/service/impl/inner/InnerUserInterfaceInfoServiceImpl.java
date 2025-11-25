@@ -19,8 +19,8 @@ public class InnerUserInterfaceInfoServiceImpl implements InnerUserInterfaceInfo
      * @return
      */
     @Override
-    public boolean invokeCount(long interfaceInfoId, long userId) {
+    public boolean invokeCount(long userId, long interfaceInfoId) {
         // 调用注入的 UserInterfaceInfoService 的 invokeCount 方法
-        return userInterfaceInfoService.invokeCount(interfaceInfoId, userId);
+        return userInterfaceInfoService.invokeCount(userId, interfaceInfoId);
     }
 }

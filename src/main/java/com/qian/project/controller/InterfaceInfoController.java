@@ -5,6 +5,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.google.gson.Gson;
 import com.qian.project.model.dto.interfaceInfo.InterfaceInfoInvokeRequest;
 import com.qian.project.model.enums.InterfaceInfoStatusEnum;
+import com.qian.qiancommon.model.entity.InterfaceInfo;
+import com.qian.qiancommon.model.entity.User;
 import com.qianapi.qianapiclientsdk.client.QianapiClient;
 import com.qian.project.annotation.AuthCheck;
 import com.qian.project.common.*;
@@ -13,8 +15,6 @@ import com.qian.project.exception.BusinessException;
 import com.qian.project.model.dto.interfaceInfo.InterfaceInfoAddRequest;
 import com.qian.project.model.dto.interfaceInfo.InterfaceInfoQueryRequest;
 import com.qian.project.model.dto.interfaceInfo.InterfaceInfoUpdateRequest;
-import com.qian.project.model.entity.InterfaceInfo;
-import com.qian.project.model.entity.User;
 import com.qian.project.service.InterfaceInfoService;
 import com.qian.project.service.UserService;
 import lombok.extern.slf4j.Slf4j;
@@ -48,7 +48,7 @@ public class InterfaceInfoController {
     @Resource
     private QianapiClient qianapiClient;
 
-    // region 增删改查
+    // region
 
     /**
      * 创建

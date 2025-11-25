@@ -2,7 +2,6 @@ package com.qian.project.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.google.gson.Gson;
 import com.qian.project.annotation.AuthCheck;
 import com.qian.project.common.*;
 import com.qian.project.constant.CommonConstant;
@@ -10,12 +9,11 @@ import com.qian.project.exception.BusinessException;
 import com.qian.project.model.dto.userinterfaceInfo.UserInterfaceInfoAddRequest;
 import com.qian.project.model.dto.userinterfaceInfo.UserInterfaceInfoQueryRequest;
 import com.qian.project.model.dto.userinterfaceInfo.UserInterfaceInfoUpdateRequest;
-import com.qian.project.model.entity.UserInterfaceInfo;
-import com.qian.project.model.entity.User;
 
 import com.qian.project.service.UserInterfaceInfoService;
 import com.qian.project.service.UserService;
-import com.qianapi.qianapiclientsdk.client.QianapiClient;
+import com.qian.qiancommon.model.entity.User;
+import com.qian.qiancommon.model.entity.UserInterfaceInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
@@ -26,7 +24,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
 /**
- * 接口 控制
+ * 用户调用接口信息 控制
  *
  * @author wyx
  */

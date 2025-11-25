@@ -1,8 +1,14 @@
 package com.qian.qianapigateway;
 
 
+import com.qian.qiancommon.model.entity.InterfaceInfo;
+import com.qian.qiancommon.model.entity.User;
+import com.qian.qiancommon.service.InnerInterfaceInfoService;
+import com.qian.qiancommon.service.InnerUserInterfaceInfoService;
+import com.qian.qiancommon.service.InnerUserService;
 import com.qianapi.qianapiclientsdk.utils.SignUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.dubbo.config.annotation.DubboReference;
 import org.reactivestreams.Publisher;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
@@ -11,6 +17,7 @@ import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DataBufferFactory;
 import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.http.server.reactive.ServerHttpResponse;
@@ -33,15 +40,29 @@ import java.util.List;
 @Component
 public class CustomGlobalFilter implements GlobalFilter, Ordered {
 
+    @DubboReference
+    private InnerUserService innerUserService;
+
+    @DubboReference
+    private InnerInterfaceInfoService innerInterfaceInfoService;
+
+    @DubboReference
+    private InnerUserInterfaceInfoService innerUserInterfaceInfoService;
+
+
     public static final List<String> IP_WHITE_LIST = Arrays.asList("127.0.0.1");
+
+    public static final String INERTFACE_HOST = "http://localhost:8123";
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         // 1. 请求日志
         ServerHttpRequest request = exchange.getRequest();
+        String path = INERTFACE_HOST + request.getPath().value();
+        String method = request.getMethod().toString();
         log.info("请求唯一标识：" + request.getId());
-        log.info("请求路径：" + request.getPath().value());
-        log.info("请求方法：" + request.getMethod());
+        log.info("请求路径：" + path);
+        log.info("请求方法：" + method);
         log.info("请求参数：" + request.getQueryParams());
         String sourceIp = request.getRemoteAddress().getHostString();
         log.info("请求来源地址：" + request.getRemoteAddress());
@@ -57,16 +78,13 @@ public class CustomGlobalFilter implements GlobalFilter, Ordered {
 
         // 3. API网关鉴权（ak sk）
         HttpHeaders headers = request.getHeaders();
-        String access = headers.getFirst("accessKey");
+        String accessKey = headers.getFirst("accessKey");
         String body = headers.getFirst("body");
         String timestamp = headers.getFirst("timestamp");
         String nonce = headers.getFirst("nonce");
         String sign = headers.getFirst("sign");
 
-        // TODO 实际情况是去数据库中查是否已分配给用户
-        if(!"access".equals(access)){
-            return handleNoAuth(serverHttpResponse);
-        }
+
         //获取的时间戳 - 当前时间戳 如果大五分钟 表示超时
         final Long FIVE_MINIUTES = 5 * 60 * 1000L;
         if(Math.abs(Long.parseLong(timestamp) - System.currentTimeMillis()) > FIVE_MINIUTES){
@@ -75,33 +93,52 @@ public class CustomGlobalFilter implements GlobalFilter, Ordered {
         if(Long.parseLong(nonce)>10000){
             return handleNoAuth(serverHttpResponse);
         }
-        // TODO 客户端的 secretKey 就是服务端签发的 实际应当去数据库中查找accessKey对应的
-        String serverSign = SignUtils.genSign(body, "asdfghjkl");
-        if(!sign.equals(serverSign)){
+
+        /**
+         * 实际情况是去数据库中查是否已分配给用户
+         */
+        User invokeUser = null;
+        try {
+            invokeUser = innerUserService.getInvokeUser(accessKey);
+        }catch (Exception e){
+            log.error("获取invoke用户信息失败", e);
+        }
+        if(invokeUser == null){
+            // 如果用户信息为空， 处理未授权情况返回响应
             return handleNoAuth(serverHttpResponse);
         }
+
+        // 获取sk
+        String serectKety = invokeUser.getSecretKey();
+        // 检查sk签名 是否和请求中的签名是否一致
+        if(!sign.equals(SignUtils.genSign(body, serectKety)) || sign == null){
+            return handleNoAuth(serverHttpResponse);
+        }
+
+
         // 4. 判断请求的接口是否存在
-        // todo 从数据库查询模拟接口是否存在
+        /**
+         * 从数据库查询模拟接口是否存在
+         */
+        InterfaceInfo interfaceInfo = null;
+        try {
+            interfaceInfo = innerInterfaceInfoService.getInterfaceInfo(path, method);
+        }catch (Exception e){
+            log.error("获取接口信息失败", e);
+        }
+        if(interfaceInfo == null){
+            // 如果接口信息为空， 处理未授权情况返回响应
+            return handleNoAuth(serverHttpResponse);
+        }
+
+
 
         // 5. 请求转发，调用模拟接口
         Mono<Void> filter = chain.filter(exchange);
 
         // 6. 响应日志
-        return handleResponse(exchange, chain);
+        return handleResponse(exchange, chain, interfaceInfo.getId(), invokeUser.getId());
 
-
-//        // 7. 调用成功，接口调用次数+1
-//        if(serverHttpResponse.getStatusCode() == HttpStatus.OK){
-//
-//        }
-//        // 8. 调用失败，返回一个规范的错误码
-//        else{
-//            serverHttpResponse.setStatusCode(HttpStatus.INTERNAL_SERVER_ERROR);
-//            return serverHttpResponse.setComplete();
-//        }
-//
-//        // 这里表示正常放行
-//        return filter;
     }
 
 
@@ -112,7 +149,7 @@ public class CustomGlobalFilter implements GlobalFilter, Ordered {
      * @param chain
      * @return
      */
-    public Mono<Void> handleResponse(ServerWebExchange exchange, GatewayFilterChain chain) {
+    public Mono<Void> handleResponse(ServerWebExchange exchange, GatewayFilterChain chain, long interfaceId, long userId) {
         try {
             // 获取原始的响应对象
             ServerHttpResponse originalResponse = exchange.getResponse();
@@ -137,8 +174,19 @@ public class CustomGlobalFilter implements GlobalFilter, Ordered {
                             Flux<? extends DataBuffer> fluxBody = Flux.from(body);
                             // 返回一个处理后的响应体
                             // (这里就理解为它在拼接字符串,它把缓冲区的数据取出来，一点一点拼接好)
-                            return super.writeWith(fluxBody.map(dataBuffer -> {
+                            return super.writeWith(
+                                    fluxBody.map(dataBuffer -> {
                                 // 读取响应体的内容并转换为字节数组
+                                /**
+                                 * 调用成功 接口调用次数+1 invokecount
+                                 */
+                                try {
+                                    innerUserInterfaceInfoService.invokeCount(userId, interfaceId);
+                                }catch (Exception e){
+                                    log.error("invokeCount error", e);
+                                }
+
+
                                 byte[] content = new byte[dataBuffer.readableByteCount()];
                                 dataBuffer.read(content);
                                 DataBufferUtils.release(dataBuffer);//释放掉内存

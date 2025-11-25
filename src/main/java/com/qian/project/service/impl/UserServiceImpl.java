@@ -7,14 +7,12 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.qian.project.common.ErrorCode;
 import com.qian.project.exception.BusinessException;
 import com.qian.project.mapper.UserMapper;
-import com.qian.project.model.entity.User;
 import com.qian.project.service.UserService;
+import com.qian.qiancommon.model.entity.User;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
-
-import cn.hutool.crypto.digest.Digester;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;

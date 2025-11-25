@@ -1,6 +1,6 @@
 package com.qian.project.service;
 
-import com.qian.project.model.entity.User;
+import com.qian.qiancommon.model.entity.User;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

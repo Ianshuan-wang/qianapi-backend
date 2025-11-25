@@ -2,7 +2,7 @@ package com.qian.project.service;
 
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.qian.project.model.entity.User;
+import com.qian.qiancommon.model.entity.User;
 
 import javax.servlet.http.HttpServletRequest;
 

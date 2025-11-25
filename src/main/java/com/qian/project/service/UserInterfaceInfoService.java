@@ -1,7 +1,7 @@
 package com.qian.project.service;
 
-import com.qian.project.model.entity.UserInterfaceInfo;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.qian.qiancommon.model.entity.UserInterfaceInfo;
 
 /**
 * @author wangyixuan

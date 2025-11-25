@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.yupi.project.provider;
+package com.qian.project.provider;
 
 
 import org.apache.dubbo.config.annotation.DubboService;
@@ -23,8 +23,6 @@ import org.apache.dubbo.rpc.RpcContext;
 /**
  * 示例服务实现类
  *
- * @author <a href="https://github.com/liyupi">程序员鱼皮</a>
- * @from <a href="https://yupi.icu">编程导航知识星球</a>
  */
 @DubboService
 public class DemoServiceImpl implements DemoService {

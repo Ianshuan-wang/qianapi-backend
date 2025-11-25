@@ -1,6 +1,7 @@
 package com.qian.project.service;
 
 
+import com.qian.qiancommon.service.InnerUserInterfaceInfoService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -15,9 +16,12 @@ public class UserInterfaceInfoServiceTest {
     private UserInterfaceInfoService userInterfaceInfoService;
 
 
+    @Resource
+    private InnerUserInterfaceInfoService innerUserInterfaceInfoService;
+
     @Test
     public void invokeCount() {
-        boolean b = userInterfaceInfoService.invokeCount(1L, 1L);
+        boolean b = innerUserInterfaceInfoService.invokeCount(4L, 1L);
         Assertions.assertTrue(b);
     }
 }

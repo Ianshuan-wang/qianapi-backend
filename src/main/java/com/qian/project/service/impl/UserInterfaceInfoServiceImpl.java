@@ -1,16 +1,15 @@
 package com.qian.project.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.qian.project.common.ErrorCode;
 import com.qian.project.exception.BusinessException;
-import com.qian.project.model.entity.InterfaceInfo;
-import com.qian.project.model.entity.User;
-import com.qian.project.model.entity.UserInterfaceInfo;
+import com.qian.project.mapper.UserMapper;
 import com.qian.project.service.UserInterfaceInfoService;
 import com.qian.project.mapper.UserInterfaceInfoMapper;
-import org.apache.commons.lang3.StringUtils;
+import com.qian.qiancommon.model.entity.InterfaceInfo;
+import com.qian.qiancommon.model.entity.User;
+import com.qian.qiancommon.model.entity.UserInterfaceInfo;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
