@@ -1,4 +1,4 @@
-package com.qian.project.model.entity;
+package com.qian.qiancommon.model.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
